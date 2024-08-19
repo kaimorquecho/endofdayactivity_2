@@ -1,0 +1,109 @@
+---
+title: "lobster_exploration"
+format: html
+---
+
+library(tidyverse)
+library(janitor)
+library(here)
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(here)
+
+
+
+lobsters <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>% 
+clean_names() %>%
+  uncount(count) #uncounting ensures that all possible values are shown, rather than show a count for how many times one repeats. 
+class(lobsters)
+
+
+
+# create a table summary that finds the total counts and mean carapace lengths of lobsteres observed in the dataset by site and year
+
+lobster_count <- lobsters %>% 
+  group_by(site, year) %>%
+  summarize(mean_length = mean(size_mm, na.rm = TRUE), 
+            count = n())
+              
+
+# create a ggplot graph of total # of lobsters observed (y axis) by year (x axis, grouped by site)
+
+ggplot(data = lobster_count, aes( x = year, y = count, color = site) )+ 
+  geom_point()+
+  expand_limits(y = 800)+
+  facet_wrap(~site, ncol=2)+
+  labs(title= "Total count of lobsters observed by year")
+
+ 
+  
+# find proportion of legal lobsters at each site for 2020
+
+# create subset containing only lobster data from 2020
+# find # of lobs observed at each size below legal limit.
+
+lobsters2020 <- lobsters %>% 
+  filter(year == "2020") %>%
+  mutate(legal = case_when(
+    size_mm < 79.76 ~ "no", 
+    size_mm >= 79.76 ~ "yes")) %>% 
+  group_by(legal,site) %>%
+  summarize(count = n())
+
+# create a graph showing proportion of legal and non-legal lobsters @ each site
+
+ggplot(lobsters2020, aes(fill = legal, x = site, y = count ))+
+  geom_bar(position = "fill", stat = "identity")+
+  xlab("Site")+
+  ylab("Number of lobsters caught")
+
+# NAPL and IVEE had the largest proportion of legal lobsters in 2020 because they are both in MAPS and are closely monitored for that reason, likely deterring illegal lobster catching to a greater degree than in sites outside of a MAP. . 
+
+
+
+
+# TASK 3 -> Random lobster wrangling 
+
+ex_a <- lobsters %>% filter( site == c("IVEE", "CARP", "NAPL"))
+
+ex_b <- lobsters %>% filter( month == 8)
+
+ex_c <- lobsters %>% filter( site == "AQUE" | size_mm > 70)
+
+ex_d <- lobsters %>% filter (!site == "NAPL")
+
+ex_e <- lobsters %>% group_by(site) %>% 
+  summarize(mean_site = mean(size_mm, na.rm = TRUE), sd_site = sd(size_mm, na.rm = TRUE))
+
+ex_g <- lobsters %>% mutate (size_cm = size_mm / 10)
+
+ex_h <- lobsters %>% mutate(across(site, tolower))
+
+ex_i <- lobsters %>% mutate(area = as.character(area))
+class(ex_i$area)
+
+ex_j <- lobsters %>%
+  mutate(size_bin = case_when(
+    size_mm <= 70 ~ "small", 
+    size_mm > 70 ~ "large"))
+
+ex_k <- lobsters  %>% 
+  mutate(designation = case_when(
+    site %in% c("IVEE", "NAPL") ~ "MPA", 
+    !site %in% c("IVEE", "NAPL") ~ "Not MPA"))
+
+
+```
+
+
+
+
+
+
+
+
+
+
